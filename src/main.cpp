@@ -65,54 +65,49 @@ uint8_t decodeOneByte(uint8_t input)
  * length7bits: Length in bytes of the input string
  * decoded: Output with the decoded 8 bit ASCII string
  *
- * returns: nothing
+ * returns: Output length
  */
-void decode(uint8_t *input, uint8_t length7bits, uint8_t *decoded, uint8_t decodedlen)
+int decode(uint8_t *input, uint8_t length7bits, uint8_t *decoded)
 {
-#ifdef DEBUG
-    printf("decode:: length7bits: %d, decodedlen:%d\r\n", length7bits, decodedlen);
-#endif
     if ((length7bits == 1) && (input[0] > 127))
     {
         printf("decode:: CAUTION. input error ('%d'>127)\r\n", input[0]);
-        return;
+        return -1;
     }
-    else
+    uint8_t decodedTempcounter = 0;
+    uint8_t sevencounter = 0;
+    int i = 0;
+    int decodedlen = length7bits*8/7;
+    for (decodedTempcounter = 0; decodedTempcounter < decodedlen;)
     {
-        uint8_t decodedTempcounter = 0;
-        uint8_t sevencounter = 0;
-        int i = 0;
-        for (decodedTempcounter = 0; decodedTempcounter < decodedlen;)
+        uint16_t v2 = 0;
+        if (i < length7bits - 1)
+            v2 = (input[i + 1] << 8);
+        uint16_t myValue = (v2 + input[i]);
+
+        if (sevencounter == 0)
         {
-            uint16_t v2 = 0;
-            if (i < length7bits - 1)
-                v2 = (input[i + 1] << 8);
-            uint16_t myValue = (v2 + input[i]);
-
-            if (sevencounter == 0)
-            {
-                uint8_t myValueSub1 = myValue & 0x7F;
-                decoded[decodedTempcounter] = decodeOneByte(myValueSub1);
+            uint8_t myValueSub1 = myValue & 0x7F;
+            decoded[decodedTempcounter] = decodeOneByte(myValueSub1);
 #ifdef DEBUG
-                printf("decode== decodedTempcounter:'%d', i:%d, sevencounter: %d, decodedTempcounter: %d, input: %d, myValue:%d, decoded: %x, decoded: %x\r\n", decodedTempcounter, i, sevencounter, decodedTempcounter, input[i], myValue, myValueSub1, decoded[decodedTempcounter]);
-#endif
-                decodedTempcounter++;
-            }
-            uint8_t myValueSub2 = (myValue >> 7 - sevencounter) & 0x7F;
-            decoded[decodedTempcounter] = decodeOneByte(myValueSub2);
-
-#ifdef DEBUG
-            printf("decode:: decodedTempcounter:'%d', i:%d, sevencounter: %d, decodedTempcounter: %d, input: %d, myValue:%d, decoded: %x, decoded: %x\r\n", decodedTempcounter, i, sevencounter, decodedTempcounter, input[i], myValue, myValueSub2, decoded[decodedTempcounter]);
+            printf("decode== decodedTempcounter:'%d', i:%d, sevencounter: %d, decodedTempcounter: %d, input: %d, myValue:%d, decoded: %x, decoded: %x\r\n", decodedTempcounter, i, sevencounter, decodedTempcounter, input[i], myValue, myValueSub1, decoded[decodedTempcounter]);
 #endif
             decodedTempcounter++;
-
-            sevencounter++;
-            if (sevencounter > 6)
-            {
-                sevencounter = 0;
-            }
-            i++;
         }
+        uint8_t myValueSub2 = (myValue >> 7 - sevencounter) & 0x7F;
+        decoded[decodedTempcounter] = decodeOneByte(myValueSub2);
+
+#ifdef DEBUG
+        printf("decode:: decodedTempcounter:'%d', i:%d, sevencounter: %d, decodedTempcounter: %d, input: %d, myValue:%d, decoded: %x, decoded: %x\r\n", decodedTempcounter, i, sevencounter, decodedTempcounter, input[i], myValue, myValueSub2, decoded[decodedTempcounter]);
+#endif
+        decodedTempcounter++;
+
+        sevencounter++;
+        if (sevencounter > 6)
+        {
+            sevencounter = 0;
+        }
+        i++;
     }
     decoded[decodedlen] = '\0';
 
@@ -132,6 +127,7 @@ void decode(uint8_t *input, uint8_t length7bits, uint8_t *decoded, uint8_t decod
     printf("decode:: length7bits = '%d'\r\n", length7bits);
     printf("decode:: decoded = '%s'\r\n", decoded);
 #endif
+    return decodedlen;
 }
 
 /* Encodes an ASCII string to 7 bit GSM encoding.
@@ -212,7 +208,7 @@ bool testCoDec(const uint8_t *encodedText, uint8_t encsize)
     printf("Text over test: = '%s'. original size: %d, encoded size: %d \r\n", encodedText, originalLen, charactersNum);
 #endif
     char decoded[charactersNum + 1] = {0};
-    decode((uint8_t *)encodedText, originalLen, (uint8_t *)decoded, charactersNum);
+    decode((uint8_t *)encodedText, originalLen, (uint8_t *)decoded);
 #ifdef DEBUG
     printf("Decoded = '%s' \r\n", decoded);
 #endif
