@@ -137,19 +137,14 @@ void decode(uint8_t *input, uint8_t length7bits, uint8_t *decoded, uint8_t decod
 /* Encodes an ASCII string to 7 bit GSM encoding.
  *
  * input: ASCII null terminated string
- * encodedLen: Output with the encoded length
  * encoded: Output with the encoded 7 bit GSM string
  *
- * returns: nothing
+ * returns: output with the encoded length
  */
-void encode(char *input, uint8_t inputsize, uint8_t *encoded, uint8_t encodedLen)
+int encode(char *input, uint8_t inputsize, uint8_t *encoded)
 {
-#ifdef DEBUG
-    printf("encode inputsize: '%d', outputsize: '%d' \r\n", inputsize, encodedLen);
-#endif
     uint8_t sevencounter = 0;
     uint8_t encodedarray[inputsize];
-    int encodedcounter = 0;
     int c1 = 1;
 
     for (int i = 0; i <= inputsize; i++)
@@ -188,6 +183,7 @@ void encode(char *input, uint8_t inputsize, uint8_t *encoded, uint8_t encodedLen
 
         sevencounter++;
     }
+    return inputsize-(inputsize/8);
 }
 
 /* Tests an encoded string, it first decodes the message and prints the ASCII output and then
@@ -228,7 +224,7 @@ bool testCoDec(const uint8_t *encodedText, uint8_t encsize)
     uint8_t *encoded;
     encoded = new uint8_t[encodedLen + 1];
     encoded[encodedLen] = '\0';
-    encode((char *)decoded, inputsize, encoded, encodedLen + 1);
+    encode((char *)decoded, inputsize, encoded);
 
 #ifdef DEBUG
     printf("Encoded = '%s': ", encoded);
